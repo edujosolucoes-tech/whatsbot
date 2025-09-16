@@ -20,7 +20,7 @@ import os
 import sys
 import argparse
 import subprocess
-import pkg_resources
+import importlib
 from pathlib import Path
 
 # Lista de dependências necessárias
@@ -37,14 +37,17 @@ def check_and_install_dependencies():
     print("🔍 Verificando dependências...")
     
     missing_packages = []
+    packages_to_check = ['fastapi', 'uvicorn', 'dotenv', 'pydantic']
     
-    for package in REQUIRED_PACKAGES:
+    for pkg_name in packages_to_check:
         try:
-            pkg_name = package.split('>=')[0].split('==')[0]
-            pkg_resources.get_distribution(pkg_name)
+            if pkg_name == 'dotenv':
+                importlib.import_module('dotenv')
+            else:
+                importlib.import_module(pkg_name)
             print(f"✅ {pkg_name} já instalado")
-        except pkg_resources.DistributionNotFound:
-            missing_packages.append(package)
+        except ImportError:
+            missing_packages.append(pkg_name)
             print(f"❌ {pkg_name} não encontrado")
     
     if missing_packages:
@@ -52,7 +55,7 @@ def check_and_install_dependencies():
         try:
             subprocess.check_call([
                 sys.executable, '-m', 'pip', 'install', '--upgrade'
-            ] + missing_packages)
+            ] + REQUIRED_PACKAGES)
             print("✅ Todas as dependências foram instaladas com sucesso!")
         except subprocess.CalledProcessError as e:
             print(f"❌ Erro ao instalar dependências: {e}")
